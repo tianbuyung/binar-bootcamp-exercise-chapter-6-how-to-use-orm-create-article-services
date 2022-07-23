@@ -16,10 +16,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "articleId",
         as: "comments",
       });
-      Article.belongsTo(Account, {
-        foreignKey: "userId",
-        as: "user",
-      });
+      // Article.belongsTo(Account, {
+      //   foreignKey: "userId",
+      //   as: "user",
+      // });
     }
   }
   Article.init(
@@ -37,25 +37,25 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      approved: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
-      },
-      userId: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        field: "user_id",
-      },
-      createdAt: {
-        type: DataTypes.DATE,
-        defaultValue: new Date(),
-        field: "created_at",
-      },
-      updatedAt: {
-        type: DataTypes.DATE,
-        defaultValue: new Date(),
-        field: "updated_at",
-      },
+      // approved: {
+      //   type: DataTypes.BOOLEAN,
+      //   defaultValue: false,
+      // },
+      // userId: {
+      //   type: DataTypes.INTEGER,
+      //   allowNull: false,
+      //   field: "user_id",
+      // },
+      // createdAt: {
+      //   type: DataTypes.DATE,
+      //   defaultValue: new Date(),
+      //   field: "created_at",
+      // },
+      // updatedAt: {
+      //   type: DataTypes.DATE,
+      //   defaultValue: new Date(),
+      //   field: "updated_at",
+      // },
     },
     {
       sequelize,
@@ -64,12 +64,6 @@ module.exports = (sequelize, DataTypes) => {
       timestamps: false,
     }
   );
-
-  Article.addHook("beforeUpdate", (article, options) => {
-    article.updatedAt = new Date();
-    console.log("article updated", article);
-    console.log("options", options);
-  });
 
   return Article;
 };
