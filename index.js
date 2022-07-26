@@ -7,6 +7,8 @@ const logger = require("morgan");
 const articleRouter = require("./routes/articleRouter");
 const userRouter = require("./routes/userRouter");
 const commentRouter = require("./routes/commentRouter");
+const tagRouter = require("./routes/tagRouter");
+const articleTagRouter = require("./routes/articleTagRouter");
 
 const app = express();
 
@@ -20,6 +22,10 @@ app.use("/articles", articleRouter);
 app.use("/users", userRouter);
 
 app.use("/comments", commentRouter);
+
+app.use("/tags", tagRouter);
+
+app.use("/article-tags", articleTagRouter);
 
 const portApi = process.env.PORT_API || 3000;
 

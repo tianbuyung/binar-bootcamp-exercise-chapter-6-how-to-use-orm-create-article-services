@@ -7,13 +7,17 @@ module.exports = (sequelize, DataTypes) => {
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    static associate({ Article, Comment, Account }) {
+    static associate({ Article, Comment, Account, Tag, ArticleTag }) {
       // define association here
       Article.hasMany(Comment, {
         foreignKey: "articleId",
       });
       Article.belongsTo(Account, {
         foreignKey: "userId",
+      });
+      Article.belongsToMany(Tag, {
+        through: { model: ArticleTag },
+        foreignKey: "articleId",
       });
     }
   }
@@ -26,6 +30,7 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: false,
       },
       userId: { type: DataTypes.INTEGER, field: "user_id" },
+      tagId: { type: DataTypes.INTEGER, field: "tag_id" },
       createdAt: {
         type: DataTypes.DATE,
         defaultValue: new Date(),

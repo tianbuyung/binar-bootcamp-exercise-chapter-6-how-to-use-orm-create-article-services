@@ -5,10 +5,12 @@ const { Account, Article, Comment } = Model;
 /* GET janken list item. */
 
 router.post("/", (req, res) => {
+  const { username, password, email, phoneNumber } = req.body;
   Account.create({
-    username: req.body.username,
-    password: req.body.password,
-    email: req.body.email,
+    username,
+    password,
+    email,
+    phoneNumber,
   })
     .then(() => res.json({ message: "Succesfully created new user" }))
     .catch((err) => {

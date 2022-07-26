@@ -1,14 +1,15 @@
 var express = require("express");
 var router = express.Router();
 const Model = require("../models");
-const { Account, Article, Comment } = Model;
+const { Account, Article, Comment, Tag, ArticleTag } = Model;
 /* GET janken list item. */
 
 // https://sequelize.org/docs/v6/core-concepts/model-querying-finders/#findandcountall
 router.get("/", (req, res) => {
   const query = req.query;
-  let limit = query.limit || 5;
-  let page = query.page;
+  console.log(typeof query.limit);
+  let limit = Number(query.limit) || 5;
+  let page = Number(query.page) || 1;
   let offset = (page - 1) * limit;
   Article.findAndCountAll({
     order: ["id"],
@@ -17,27 +18,28 @@ router.get("/", (req, res) => {
     include: [
       {
         model: Comment,
-        as: "comments",
         attributes: ["commentBody", "createdAt"],
         include: [
           {
             model: Account,
-            as: "user",
             attributes: ["username", "email"],
           },
         ],
       },
       {
         model: Account,
-        as: "user",
         attributes: ["username", "email"],
+      },
+      {
+        model: Tag,
+        attributes: ["id", "tagName"],
       },
     ],
   })
     .then((articles) => {
       res.json({
         articles,
-        pages: Math.ceil(articles.count / limit),
+        pages: `${page} from ${Math.ceil(articles.count / limit)}`,
       });
     })
     .catch((err) => {
@@ -46,23 +48,19 @@ router.get("/", (req, res) => {
       });
     });
   // Article.findAll({
-  //   order: ["id"],
   //   include: [
   //     {
   //       model: Comment,
-  //       as: "comments",
   //       attributes: ["commentBody", "createdAt"],
   //       include: [
   //         {
   //           model: Account,
-  //           as: "user",
   //           attributes: ["username", "email"],
   //         },
   //       ],
   //     },
   //     {
   //       model: Account,
-  //       as: "user",
   //       attributes: ["username", "email"],
   //     },
   //   ],
@@ -79,31 +77,12 @@ router.get("/", (req, res) => {
   //   );
 });
 
-router.get("/:id", (req, res) => {
-  Article.findOne({
-    where: {
-      id: req.params.id,
-    },
-  })
-    .then((data) => {
-      res.json({
-        data,
-      });
-    })
-    .catch((err) =>
-      res.json({
-        err,
-      })
-    );
-});
-
-router.post("/articles", (req, res) => {
-  if (title.length < 4 || title.length > 100) {
-    res.json("");
-  }
+router.post("/create", (req, res) => {
   Article.create({
     title: req.body.title,
     body: req.body.body,
+    tagId: req.body.tagId,
+    userId: req.headers.user_id,
   })
     .then((article) => {
       console.log(article);
@@ -119,7 +98,7 @@ router.post("/articles", (req, res) => {
     });
 });
 
-router.put("/:id", (req, res) => {
+router.put("/edit/:id", (req, res) => {
   // hasing password
   //   Article.findOne({
   //     where: {
@@ -135,6 +114,7 @@ router.put("/:id", (req, res) => {
     {
       body: req.body.body,
       title: req.body.title,
+      tagId: req.body.tagId,
       approved: req.body.approved,
     },
     {
@@ -153,6 +133,40 @@ router.put("/:id", (req, res) => {
     .catch((err) => {
       console.error("Gagal mengupdate artikel!");
     });
+});
+
+router.get("/:id", (req, res) => {
+  Article.findOne({
+    where: {
+      id: req.params.id,
+    },
+    include: [
+      {
+        model: Comment,
+        attributes: ["commentBody", "createdAt"],
+        include: [
+          {
+            model: Account,
+            attributes: ["username", "email"],
+          },
+        ],
+      },
+      {
+        model: Account,
+        attributes: ["username", "email"],
+      },
+    ],
+  })
+    .then((data) => {
+      res.json({
+        data,
+      });
+    })
+    .catch((err) =>
+      res.json({
+        err,
+      })
+    );
 });
 
 module.exports = router;
