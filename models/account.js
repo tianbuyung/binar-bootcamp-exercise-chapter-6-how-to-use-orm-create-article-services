@@ -19,43 +19,29 @@ module.exports = (sequelize, DataTypes) => {
   }
   Account.init(
     {
-      id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-        field: "user_id",
-      },
-      username: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
+      username: DataTypes.STRING,
       password: DataTypes.STRING,
-      email: {
+      email: DataTypes.STRING,
+      lastLogin: { type: DataTypes.DATE, field: "last_login" },
+      phoneNumber: {
         type: DataTypes.STRING,
-        allowNull: false,
-        validate: {
-          isEmail: true,
-        },
+        field: "phone_number",
       },
       createdAt: {
         type: DataTypes.DATE,
         defaultValue: new Date(),
-        field: "created_on",
+        field: "created_at",
       },
-      lastLogin: {
+      updatedAt: {
         type: DataTypes.DATE,
-        field: "last_login",
-      },
-      phoneNumber: {
-        type: DataTypes.STRING,
-        field: "phone_number",
+        defaultValue: new Date(),
+        field: "updated_at",
       },
     },
     {
       sequelize,
       modelName: "Account",
       tableName: "accounts",
-      timestamps: false,
     }
   );
   return Account;

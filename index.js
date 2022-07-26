@@ -1,25 +1,28 @@
-const { Sequelize } = require("sequelize");
-const express = require("express");
-const app = express();
+require("dotenv").config();
 
-const Model = require("./models");
-const { Account, Article, Comment } = Model;
-const bodyParser = require("body-parser");
+const express = require("express");
+const cookieParser = require("cookie-parser");
+const logger = require("morgan");
+
 const articleRouter = require("./routes/articleRouter");
 const userRouter = require("./routes/userRouter");
 const commentRouter = require("./routes/commentRouter");
 
-// parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({ extended: false }));
+const app = express();
 
-// parse application/json
-app.use(bodyParser.json());
+app.use(logger("dev"));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+
 app.use("/articles", articleRouter);
 
 app.use("/users", userRouter);
 
 app.use("/comments", commentRouter);
 
+const portApi = process.env.PORT_API || 3000;
 
-
-app.listen(3000);
+app.listen(portApi, () => {
+  console.log(`This app listening at http://localhost:${portApi}`);
+});

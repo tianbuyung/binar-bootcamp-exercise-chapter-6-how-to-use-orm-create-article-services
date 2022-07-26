@@ -9,36 +9,17 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      //   models.Comment.belongsTo(models.Article, { foreignKey: "articleId" });
       models.Comment.belongsTo(models.Article, { foreignKey: "articleId" });
       models.Comment.belongsTo(models.Account, {
         foreignKey: "userId",
-        as: "user",
       });
     }
   }
   Comment.init(
     {
-      id: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
-        primaryKey: true,
-      },
-      commentBody: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        field: "comment_body",
-      },
-      userId: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        field: "user_id",
-      },
-      articleId: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        field: "article_id",
-      },
+      commentId: { type: DataTypes.STRING, field: "comment_body" },
+      articleId: { type: DataTypes.INTEGER, field: "article_id" },
+      userId: { type: DataTypes.INTEGER, field: "user_id" },
       createdAt: {
         type: DataTypes.DATE,
         defaultValue: new Date(),
@@ -54,7 +35,6 @@ module.exports = (sequelize, DataTypes) => {
       sequelize,
       modelName: "Comment",
       tableName: "comments",
-      timestamps: false,
     }
   );
   return Comment;
