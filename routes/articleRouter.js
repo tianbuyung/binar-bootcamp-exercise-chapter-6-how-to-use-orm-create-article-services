@@ -1,11 +1,12 @@
-var express = require("express");
-var router = express.Router();
+const express = require("express");
+const router = express.Router();
 const Model = require("../models");
 const { Account, Article, Comment, Tag, ArticleTag } = Model;
 /* GET janken list item. */
 
 // https://sequelize.org/docs/v6/core-concepts/model-querying-finders/#findandcountall
-router.get("/", (req, res) => {
+router.get("/", checkAuthentication, checkRoleSuperAdmin, async (req, res) => {
+  console.log("req, user", req.user);
   const query = req.query;
   console.log(typeof query.limit);
   let limit = Number(query.limit) || 5;
@@ -41,11 +42,20 @@ router.get("/", (req, res) => {
         articles,
         pages: `${page} from ${Math.ceil(articles.count / limit)}`,
       });
-    })
-    .catch((err) => {
+      await client.set(
+        `article:detail:${article.id}`,
+        JSON.stringify(article),
+        { EX: 60 * 60 }
+      );
       res.json({
-        err,
+        data: article,
+        type: "db",
       });
+    }
+  } catch (error) {
+    console.log("error", error);
+    res.json({
+      error,
     });
   // Article.findAll({
   //   include: [
@@ -66,8 +76,11 @@ router.get("/", (req, res) => {
   //   ],
   // })
   //   .then((data) => {
-  //     res.json({
-  //       data,
+  //     Account.findAll().then((accounts) => {
+  //       res.json({
+  //         data,
+  //         accounts,
+  //       });
   //     });
   //   })
   //   .catch((err) =>
@@ -94,6 +107,27 @@ router.post("/create", (req, res) => {
         message: err.message,
       });
     });
+  } catch (err) {
+    res.json({
+      message: err.message,
+    });
+  }
+  // Article.create({
+  // title: req.body.title,
+  // body: req.body.body,
+  // })
+  //   .then((article) => {
+  //     console.log(article);
+  // res.json({
+  //   message: "Succesfully create new article",
+  // });
+  //   })
+  //   .catch((err) => {
+  //     console.log("err", err);
+  // res.json({
+  //   message: err.message,
+  // });
+  //   });
 });
 
 router.put("/edit/:id", (req, res) => {
@@ -102,11 +136,17 @@ router.put("/edit/:id", (req, res) => {
   //     where: {
   //       id: req.params.id,
   //     },
-  //   }).then((article) => {
-  //     article.body = req.body.body;
-  //     article.title = req.body.title;
-  //     approved = req.body.approved;
-  //     article.save();
+  //     individualHooks: true,
+  //   }
+  // )
+  //   .then(() => {
+  //     console.log("Artikel berhasil diupdate");
+  // res.json({
+  //   message: "Succesfully edit",
+  // });
+  //   })
+  //   .catch((err) => {
+  //     console.error("Gagal mengupdate artikel!");
   //   });
   Article.update(
     {
