@@ -1,14 +1,16 @@
 const express = require("express");
 const router = express.Router();
 const Model = require("../models");
-const { Account, Article, Comment } = Model;
+const { Account, Article, Comment, AddressUser } = Model;
 /* GET janken list item. */
 
 router.post("/", (req, res) => {
+  const { username, password, email, phoneNumber } = req.body;
   Account.create({
-    username: req.body.username,
-    password: req.body.password,
-    email: req.body.email,
+    username,
+    password,
+    email,
+    phoneNumber,
   })
     .then(() => res.json({ message: "Succesfully created new user" }))
     .catch((err) => {
@@ -20,6 +22,9 @@ router.post("/", (req, res) => {
 router.get("/", (req, res) => {
   Account.findAll({
     include: [
+      {
+        model: AddressUser,
+      },
       {
         model: Article,
       },
@@ -45,6 +50,9 @@ router.get("/:id", (req, res) => {
       id: req.params.id,
     },
     include: [
+      {
+        model: AddressUser,
+      },
       {
         model: Article,
       },

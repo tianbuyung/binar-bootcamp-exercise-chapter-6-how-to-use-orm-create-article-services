@@ -8,12 +8,7 @@ module.exports = {
      * Example:
      * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
      */
-    queryInterface.addColumn("articles", "is_verified", {
-      type: Sequelize.BOOLEAN,
-    });
-    queryInterface.addColumn("accounts", "is_verified", {
-      type: Sequelize.BOOLEAN,
-    });
+    return queryInterface.addColumn("articles", "tag_id", Sequelize.INTEGER);
   },
 
   async down(queryInterface, Sequelize) {
@@ -23,8 +18,6 @@ module.exports = {
      * Example:
      * await queryInterface.dropTable('users');
      */
-    queryInterface.removeColumn("articles", "is_verified");
-
-    queryInterface.removeColumn("accounts", "is_verified");
+    return queryInterface.removeColumn("articles", "tag_id");
   },
 };

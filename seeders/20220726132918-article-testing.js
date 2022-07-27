@@ -15,14 +15,15 @@ module.exports = {
 
     for (let i = 1; i <= 20; i++) {
       data.push({
-        username: `user-test-${i}`,
-        password: `usertest${i}`,
-        email: `user-test-${i}@gmail.com`,
+        title: `article-test-${i}`,
+        body: `article-test${i}`,
+        approved: true,
+        user_id: Math.floor(Math.random() * 20 + 1),
         created_at: new Date(),
         updated_at: new Date(),
       });
     }
-    return queryInterface.bulkInsert("accounts", data);
+    return queryInterface.bulkInsert("articles", data);
   },
 
   async down(queryInterface, Sequelize) {
@@ -30,8 +31,8 @@ module.exports = {
      * Add commands to revert seed here.
      *
      * Example:
-     * await
+     * await queryInterface.bulkDelete('People', null, {});
      */
-    queryInterface.bulkDelete("accounts", null, {});
+    queryInterface.bulkDelete("articles", null, {});
   },
 };

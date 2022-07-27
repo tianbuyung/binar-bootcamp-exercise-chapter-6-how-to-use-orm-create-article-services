@@ -1,76 +1,46 @@
 const express = require("express");
 const router = express.Router();
 const Model = require("../models");
-const { Account, Article, Comment } = Model;
-const { client } = require("../cached/redis");
-const checkAuthentication = require("../middlewares/checkAuthentication");
-const checkRoleSuperAdmin = require("../middlewares/checkRoleSuperAdmin");
-// import { client } from "../cached/redis";
+const { Account, Article, Comment, Tag, ArticleTag } = Model;
 /* GET janken list item. */
 
 // https://sequelize.org/docs/v6/core-concepts/model-querying-finders/#findandcountall
 router.get("/", checkAuthentication, checkRoleSuperAdmin, async (req, res) => {
   console.log("req, user", req.user);
   const query = req.query;
-  let limit = query.limit || 5;
-  let page = query.page || 1;
+  console.log(typeof query.limit);
+  let limit = Number(query.limit) || 5;
+  let page = Number(query.page) || 1;
   let offset = (page - 1) * limit;
-  try {
-    const articlesRedis = await client.get(`article:list:${page}`);
-    if (articlesRedis) {
-      res.json({
-        articles: JSON.parse(articlesRedis),
-        pages: Math.ceil(JSON.parse(articlesRedis).count / limit),
-        type: "redis",
-      });
-    } else {
-      const articles = await Article.findAndCountAll({
-        order: ["id"],
-        limit,
-        offset,
+  Article.findAndCountAll({
+    order: ["id"],
+    limit: limit,
+    offset,
+    include: [
+      {
+        model: Comment,
+        attributes: ["commentBody", "createdAt"],
         include: [
           {
-            model: Comment,
-            as: "comments",
-            attributes: ["commentBody", "createdAt"],
-            include: [
-              {
-                model: Account,
-                as: "user",
-                attributes: ["username", "email"],
-              },
-            ],
+            model: Account,
+            attributes: ["username", "email"],
           },
         ],
-      });
-      await client.set(`article:list:${page}`, JSON.stringify(articles));
+      },
+      {
+        model: Account,
+        attributes: ["username", "email"],
+      },
+      {
+        model: Tag,
+        attributes: ["id", "tagName"],
+      },
+    ],
+  })
+    .then((articles) => {
       res.json({
         articles,
-        pages: Math.ceil(articles.count / limit),
-        type: "db",
-      });
-    }
-  } catch (error) {
-    console.log("error", error);
-    res.json({
-      error,
-    });
-  }
-});
-
-router.get("/:id", checkAuthentication, async (req, res) => {
-  try {
-    const articleRedis = await client.get(`article:detail:${req.params.id}`);
-    if (articleRedis) {
-      res.json({
-        data: JSON.parse(articleRedis),
-        type: "redis",
-      });
-    } else {
-      const article = await Article.findOne({
-        where: {
-          id: req.params.id,
-        },
+        pages: `${page} from ${Math.ceil(articles.count / limit)}`,
       });
       await client.set(
         `article:detail:${article.id}`,
@@ -87,11 +57,23 @@ router.get("/:id", checkAuthentication, async (req, res) => {
     res.json({
       error,
     });
-  }
-  // Article.findOne({
-  //   where: {
-  //     id: req.params.id,
-  //   },
+  // Article.findAll({
+  //   include: [
+  //     {
+  //       model: Comment,
+  //       attributes: ["commentBody", "createdAt"],
+  //       include: [
+  //         {
+  //           model: Account,
+  //           attributes: ["username", "email"],
+  //         },
+  //       ],
+  //     },
+  //     {
+  //       model: Account,
+  //       attributes: ["username", "email"],
+  //     },
+  //   ],
   // })
   //   .then((data) => {
   //     Account.findAll().then((accounts) => {
@@ -108,20 +90,22 @@ router.get("/:id", checkAuthentication, async (req, res) => {
   //   );
 });
 
-router.post("/", checkAuthentication, async (req, res) => {
-  try {
-    const articleCreated = await Article.create({
-      title: req.body.title,
-      body: req.body.body,
-      userId: req.headers.user_id,
-    });
-    await client.set(
-      `article:detail:${articleCreated.id}`,
-      JSON.stringify(articleCreated)
-    );
-    res.json({
-      message: "Succesfully create new article",
-      articleCreated,
+router.post("/create", (req, res) => {
+  Article.create({
+    title: req.body.title,
+    body: req.body.body,
+    tagId: req.body.tagId,
+    userId: req.headers.user_id,
+  })
+    .then(() => {
+      res.json({
+        message: "Succesfully create new article",
+      });
+    })
+    .catch((err) => {
+      res.json({
+        message: err.message,
+      });
     });
   } catch (err) {
     res.json({
@@ -146,34 +130,9 @@ router.post("/", checkAuthentication, async (req, res) => {
   //   });
 });
 
-router.put("/:id", checkAuthentication, async (req, res) => {
-  try {
-    await Article.update(
-      {
-        body: req.body.body,
-        title: req.body.title,
-        approved: req.body.approved,
-      },
-      {
-        where: {
-          id: req.params.id,
-        },
-      }
-    );
-    client.del(`article:detail:${req.params.id}`);
-    res.json({
-      message: "Succesfully edit",
-    });
-  } catch (error) {
-    console.log("Gagal mengupdate artikel!", error);
-  }
-  // Article.update(
-  //   {
-  //     body: req.body.body,
-  //     title: req.body.title,
-  //     approved: req.body.approved,
-  //   },
-  //   {
+router.put("/edit/:id", (req, res) => {
+  // hasing password
+  //   Article.findOne({
   //     where: {
   //       id: req.params.id,
   //     },
@@ -189,6 +148,63 @@ router.put("/:id", checkAuthentication, async (req, res) => {
   //   .catch((err) => {
   //     console.error("Gagal mengupdate artikel!");
   //   });
+  Article.update(
+    {
+      body: req.body.body,
+      title: req.body.title,
+      tagId: req.body.tagId,
+      approved: req.body.approved,
+    },
+    {
+      where: {
+        id: req.params.id,
+      },
+      individualHooks: true,
+    }
+  )
+    .then(() => {
+      console.log("Artikel berhasil diupdate");
+      res.json({
+        message: "Succesfully edit",
+      });
+    })
+    .catch((err) => {
+      console.error("Gagal mengupdate artikel!");
+    });
+});
+
+router.get("/:id", (req, res) => {
+  Article.findOne({
+    where: {
+      id: req.params.id,
+    },
+    include: [
+      {
+        model: Comment,
+        attributes: ["commentBody", "createdAt"],
+        include: [
+          {
+            model: Account,
+            attributes: ["username", "email"],
+          },
+        ],
+      },
+      {
+        model: Account,
+        attributes: ["username", "email"],
+      },
+    ],
+  })
+    .then((data) => {
+      res.json({
+        data,
+      });
+    })
+    .catch((err) =>
+      res.json({
+        err,
+      })
+    );
 });
 
 module.exports = router;
