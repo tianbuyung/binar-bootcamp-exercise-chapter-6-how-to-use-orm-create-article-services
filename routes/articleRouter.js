@@ -84,14 +84,12 @@ router.post("/create", (req, res) => {
     tagId: req.body.tagId,
     userId: req.headers.user_id,
   })
-    .then((article) => {
-      console.log(article);
+    .then(() => {
       res.json({
         message: "Succesfully create new article",
       });
     })
     .catch((err) => {
-      console.log("err", err);
       res.json({
         message: err.message,
       });
